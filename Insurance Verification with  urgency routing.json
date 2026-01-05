@@ -1,0 +1,688 @@
+{
+  "name": "Insurance Verification with  urgency routing",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "af406fbb-84a2-4094-9d86-3ad6d37440e3",
+              "name": "patient_name",
+              "value": "={{$json.body.patient_name}}",
+              "type": "string"
+            },
+            {
+              "id": "ad97dbc6-4b78-4999-beff-dc3c951aac2b",
+              "name": "appointment_date",
+              "value": "={{$json.body.appointment_date}}\n",
+              "type": "string"
+            },
+            {
+              "id": "f92ee30c-599c-4c53-a918-e21505eda994",
+              "name": "procedure_type",
+              "value": "={{$json.body.procedure_type}}",
+              "type": "string"
+            },
+            {
+              "id": "d5fb151d-b3a6-4591-9267-4d5c34e17cc7",
+              "name": "insurance_id",
+              "value": "={{$json.body.insurance_id}}\n",
+              "type": "string"
+            },
+            {
+              "id": "f13b9818-dc18-4c16-a93d-2b43df0b411c",
+              "name": "confidence_score",
+              "value": "={{$json.body.confidence_score}}\n",
+              "type": "number"
+            },
+            {
+              "id": "cbae9292-36b5-4464-a4b7-7b8dcdb09913",
+              "name": "priority",
+              "value": "UNKNOWN",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        80,
+        16
+      ],
+      "id": "f0016ca0-a70e-40cb-9d05-9a80e6d123de",
+      "name": "Normalize Patient Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "59f5e5d9-bf09-4888-b1ca-fd25d5b5334c",
+              "leftValue": "={{$json.procedure_type}}",
+              "rightValue": "Surgery",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "8bc7f8eb-1578-42c2-8235-0b336db30bb6",
+              "leftValue": "={{$json.appointment_date}}",
+              "rightValue": "={{$now.plus({ days: 2 }).toISODate()}}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "before"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        288,
+        16
+      ],
+      "id": "89cb0f46-5323-4a55-98a0-f34358ec54ca",
+      "name": "Is Case Urgent?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "95af8bbb-5835-406c-a4fe-33ccd22c2440",
+              "name": "priority",
+              "value": "HIGH",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        496,
+        -96
+      ],
+      "id": "0b52474d-2438-43f1-99d9-060bf771654e",
+      "name": "Tag as URGENT"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b9610e34-ad8f-4185-a31f-85e9df769fff",
+              "name": "priority",
+              "value": "NORMAL",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        96
+      ],
+      "id": "c9d61f8e-1798-4628-bb5d-2d183b733f11",
+      "name": "Tag as NORMAL"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e66fba64-4665-42bc-ba41-665a0633ad53",
+              "leftValue": "={{ Number($json.confidence_score) }}\n",
+              "rightValue": 95,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        704,
+        -192
+      ],
+      "id": "314175ac-16cf-4fdf-89c6-9c66942eb793",
+      "name": "Is Confidence High for Urgent?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ab79730b-4489-4347-9f85-59a6efb81bfb",
+              "leftValue": "={{$json.confidence_score}}",
+              "rightValue": 85,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        688,
+        176
+      ],
+      "id": "c6fdf1de-e1b1-4a32-ab9d-f0747ac36b1c",
+      "name": "Is Confidence High for Normal?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1e76e59-47a1-41c2-9e1f-7f64696c06b0",
+              "name": "processing_mode",
+              "value": "Auto Process (Fast-track)",
+              "type": "string"
+            },
+            {
+              "id": "e7142bb3-ff7a-4387-8430-f7f10c9f6d4f",
+              "name": "assigned_to",
+              "value": "SYSTEM",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        -304
+      ],
+      "id": "a9655a65-142f-4cf4-a01f-590e8c880898",
+      "name": "Auto Process (Fast-track)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fe4cfaae-83c0-4fb1-a9bd-fd86ab0c4ae4",
+              "name": "processing_mode",
+              "value": "Immediate Human Review",
+              "type": "string"
+            },
+            {
+              "id": "71539f15-c23c-4622-b2ae-e5b121d62905",
+              "name": "assigned_to",
+              "value": "INSURANCE_TEAM",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        -80
+      ],
+      "id": "a9ab9f2b-b576-40bd-9b16-bcf011def96e",
+      "name": " Immediate Human Review"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "62e52d8b-9ee8-4ca0-907b-714336af95f3",
+              "name": "processing_mode",
+              "value": "Auto Process",
+              "type": "string"
+            },
+            {
+              "id": "ef03f77a-a0d1-4829-93bc-1c5d6a9d1de2",
+              "name": "assigned_to",
+              "value": "SYSTEM",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        128
+      ],
+      "id": "c45a185b-a2b4-4f3a-b16f-037b5288c62d",
+      "name": "Auto Process"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3985670b-05ad-483b-baf3-2c55389a9a9b",
+              "name": "processing_mode",
+              "value": "Queue for Review",
+              "type": "string"
+            },
+            {
+              "id": "aaa2c9a3-70db-419a-ac4a-778618a4a4e6",
+              "name": "assigned_to",
+              "value": "INSURANCE_TEAM",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        336
+      ],
+      "id": "9d5d1e29-ac0e-4e69-b243-b1d4ba5964f6",
+      "name": "Queue for Review"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "insurance-intake",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -128,
+        16
+      ],
+      "id": "d9a4f28d-f208-4df5-b638-855af8d60072",
+      "name": "Webhook",
+      "webhookId": "a432f29f-560c-4742-8377-c429272366b6"
+    },
+    {
+      "parameters": {
+        "sendTo": "ece191388@gmail.com",
+        "subject": "=Patient Pre-Approved: {{$json.patient_name}} ({{$json.insurance_id}})",
+        "message": "=<p>Hello,</p>  <p>The following patient has been <b>pre-approved</b> for insurance processing:</p>  <ul>   <li><b>Patient Name:</b> {{$json.patient_name}}</li>   <li><b>Insurance ID:</b> {{$json.insurance_id}}</li>   <li><b>Procedure:</b> {{$json.procedure_type}}</li>   <li><b>Appointment Date:</b> {{$json.appointment_date}}</li>   <li><b>Confidence Score:</b> {{$json.confidence_score}}</li> </ul>  <p>Status: <b>AUTO-PROCESSED</b></p>  <p>Regards,<br/> Insurance Automation System</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        -304
+      ],
+      "id": "c86f335c-5815-4dea-bc9c-e2423ba8eb28",
+      "name": "Send a patient credential  to insurance company ",
+      "webhookId": "5eb0712e-1f26-4c83-9265-6049c790777b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "sk39fbGm50Vi1Jd0",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "=ece191388@gmail.com",
+        "subject": "=Patient Pre-Approved: {{$json.patient_name}} ({{$json.insurance_id}})",
+        "message": "=<p>Hello,</p>  <p>The following patient has been <b>pre-approved</b> for insurance processing:</p>  <ul>   <li><b>Patient Name:</b> {{$json.patient_name}}</li>   <li><b>Insurance ID:</b> {{$json.insurance_id}}</li>   <li><b>Procedure:</b> {{$json.procedure_type}}</li>   <li><b>Appointment Date:</b> {{$json.appointment_date}}</li>   <li><b>Confidence Score:</b> {{$json.confidence_score}}</li> </ul>  <p>Status: <b>AUTO-PROCESSED</b></p>  <p>Regards,<br/> Insurance Automation System</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        128
+      ],
+      "id": "5e8caa25-edef-43ad-bdb0-9e154333e2a8",
+      "name": "Send a patient credential  to insurance company 1",
+      "webhookId": "b3d11c36-56c7-41de-bbc2-ca2212fbc175",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "sk39fbGm50Vi1Jd0",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "ece191388@gmail.com",
+        "subject": "=Action Required: Patient Manual Review – {{$json.patient_name}}",
+        "message": "=<p>Hello Team,</p>  <p>The following patient case requires <b>manual review</b> before proceeding:</p>  <ul>   <li><b>Patient Name:</b> {{$json.patient_name}}</li>   <li><b>Insurance ID:</b> {{$json.insurance_id}}</li>   <li><b>Procedure:</b> {{$json.procedure_type}}</li>   <li><b>Appointment Date:</b> {{$json.appointment_date}}</li>   <li><b>Confidence Score:</b> {{$json.confidence_score}}</li>   <li><b>Priority:</b> {{$json.priority}}</li> </ul>  <p><b>Reason for Manual Review:</b></p> <ul>   <li>Confidence score below automation threshold</li>   <li>Requires human validation or patient relocation</li> </ul>  <p>Please review the case and take appropriate next steps.</p>  <p>Thank you,<br/> Healthcare Operations Automation</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        -80
+      ],
+      "id": "4992609b-b544-445a-ac7b-32bed3a29145",
+      "name": "Send a patient credential  to manual recheck",
+      "webhookId": "a95bd48b-76d8-4459-b166-a50d348aaae7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "sk39fbGm50Vi1Jd0",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "ece191388@gmail.com",
+        "subject": "=Action Required: Patient Manual Review – {{$json.patient_name}}",
+        "message": "=<p>Hello Team,</p>  <p>The following patient case requires <b>manual review</b> before proceeding:</p>  <ul>   <li><b>Patient Name:</b> {{$json.patient_name}}</li>   <li><b>Insurance ID:</b> {{$json.insurance_id}}</li>   <li><b>Procedure:</b> {{$json.procedure_type}}</li>   <li><b>Appointment Date:</b> {{$json.appointment_date}}</li>   <li><b>Confidence Score:</b> {{$json.confidence_score}}</li>   <li><b>Priority:</b> {{$json.priority}}</li> </ul>  <p><b>Reason for Manual Review:</b></p> <ul>   <li>Confidence score below automation threshold</li>   <li>Requires human validation or patient relocation</li> </ul>  <p>Please review the case and take appropriate next steps.</p>  <p>Thank you,<br/> Healthcare Operations Automation</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        336
+      ],
+      "id": "1772a73f-cf4b-4ad5-b5cb-30fdf6e29e2d",
+      "name": "Send a patient credential  to manual recheck1",
+      "webhookId": "17a56510-7b1f-4463-91a6-958006f594bf",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "sk39fbGm50Vi1Jd0",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "harshitha-27.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+            "content-length": "160",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "64.227.21.251",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9b8c2498c7e06c99-EWR",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "64.227.21.251, 172.71.203.86",
+            "x-forwarded-host": "harshitha-27.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-107-64778765cb-t7vkm",
+            "x-is-trusted": "yes",
+            "x-real-ip": "64.227.21.251"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "patient_name": "Riya Sharma",
+            "appointment_date": "2026-06-01",
+            "procedure_type": "Surgery",
+            "insurance_id": "INS-98765",
+            "confidence_score": 98
+          },
+          "webhookUrl": "https://harshitha-27.app.n8n.cloud/webhook-test/insurance-intake",
+          "executionMode": "test"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Normalize Patient Data": [
+      {
+        "json": {
+          "headers": {
+            "host": "harshitha-27.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+            "content-length": "160",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "64.227.21.251",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9b8c2498c7e06c99-EWR",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "64.227.21.251, 172.71.203.86",
+            "x-forwarded-host": "harshitha-27.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-107-64778765cb-t7vkm",
+            "x-is-trusted": "yes",
+            "x-real-ip": "64.227.21.251"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "patient_name": "Riya Sharma",
+            "appointment_date": "2026-06-01",
+            "procedure_type": "Surgery",
+            "insurance_id": "INS-98765",
+            "confidence_score": 98
+          },
+          "webhookUrl": "https://harshitha-27.app.n8n.cloud/webhook-test/insurance-intake",
+          "executionMode": "test",
+          "patient_name": "Riya Sharma",
+          "appointment_date": "2026-06-01\n",
+          "procedure_type": "Surgery",
+          "insurance_id": "INS-98765\n",
+          "confidence_score": 98,
+          "priority": "UNKNOWN"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Normalize Patient Data": {
+      "main": [
+        [
+          {
+            "node": "Is Case Urgent?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Case Urgent?": {
+      "main": [
+        [
+          {
+            "node": "Tag as URGENT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tag as NORMAL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag as URGENT": {
+      "main": [
+        [
+          {
+            "node": "Is Confidence High for Urgent?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag as NORMAL": {
+      "main": [
+        [
+          {
+            "node": "Is Confidence High for Normal?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Confidence High for Urgent?": {
+      "main": [
+        [
+          {
+            "node": "Auto Process (Fast-track)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": " Immediate Human Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Confidence High for Normal?": {
+      "main": [
+        [
+          {
+            "node": "Auto Process",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Queue for Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Patient Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auto Process (Fast-track)": {
+      "main": [
+        [
+          {
+            "node": "Send a patient credential  to insurance company ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auto Process": {
+      "main": [
+        [
+          {
+            "node": "Send a patient credential  to insurance company 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Immediate Human Review": {
+      "main": [
+        [
+          {
+            "node": "Send a patient credential  to manual recheck",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Queue for Review": {
+      "main": [
+        [
+          {
+            "node": "Send a patient credential  to manual recheck1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "85df8764-f38b-4d6f-880d-785e78d943f0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "117738e34914655cf2a42ed7bf4bf2145500f9efdd696b83e8c206c4a6c9720f"
+  },
+  "id": "bAaRdQB3Tix79MJc",
+  "tags": []
+}
